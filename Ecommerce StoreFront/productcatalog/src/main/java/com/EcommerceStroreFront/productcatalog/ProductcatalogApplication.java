@@ -1,13 +1,13 @@
-package com.firstproject.FirstProject;
+package com.EcommerceStroreFront.productcatalog;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class FirstProject {
+public class ProductcatalogApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(FirstProject.class, args);
+		SpringApplication.run(ProductcatalogApplication.class, args);
 	}
 
 }

@@ -13,4 +13,7 @@ public interface BillRepository extends JpaRepository<Bill, Long> {
     List<Bill> findByCustomerPhone(String customerPhone);
     List<Bill> findByDate(LocalDate date);
     Optional<Bill>findByInvoiceNumber(String invoiceNumber);
+
+
+
 }
