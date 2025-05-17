@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -30,44 +31,47 @@ public class BillService {
         bill.setCustomerPhone(customerPhone);
         bill.setDate(LocalDate.now());
         bill.setInvoiceNumber(invoiceNumberGenerator.generateNextInvoiceNumber());
-        bill.setItems(items);
 
         double totalAmount = 0;
+
         for (BillItem item : items) {
-            // Check if the product is null
-            if (item.getProduct() == null || item.getProduct().getId() == null) {
-                throw new RuntimeException("Product or Product ID is null in BillItem");
-            }
-            // Fetch the product from the database
+            // Fetch the complete product from database
             Product product = productRepository.findById(item.getProduct().getId())
                     .orElseThrow(() -> new RuntimeException("Product not found with ID: " + item.getProduct().getId()));
 
-            // Check if there's enough stock
+            // Check stock
             if (product.getQuantity() < item.getQuantity()) {
                 throw new RuntimeException("Not enough stock for product: " + product.getBrand() + " " + product.getModel());
             }
 
-            // Reduce the product quantity
+            // Update stock
             product.setQuantity(product.getQuantity() - item.getQuantity());
             productRepository.save(product);
 
-            // Calculate total amount for the item
+            // Create a new BillItem with the complete product
+            BillItem newItem = new BillItem();
+            newItem.setProduct(product);  // Set the complete product object
+            newItem.setQuantity(item.getQuantity());
+            newItem.setBill(bill);
+
+            // Calculate amount
             totalAmount += product.getPrice() * item.getQuantity();
 
-            // Link the bill item to the bill
-            item.setBill(bill);
+            // Add to bill's items list
+            if (bill.getItems() == null) {
+                bill.setItems(new ArrayList<>());
+            }
+            bill.getItems().add(newItem);
         }
 
         // Calculate GST and grand total
         double gstAmount = totalAmount * 0.18;
         double grandTotal = totalAmount + gstAmount;
 
-        // Set amounts in the bill
         bill.setTotalAmount(totalAmount);
         bill.setGstAmount(gstAmount);
         bill.setGrandTotal(grandTotal);
 
-        // Save the bill to the database
         return billRepository.save(bill);
     }
 
@@ -83,5 +87,9 @@ public class BillService {
         return billRepository.findByInvoiceNumber(invoiceNumber)
                 .orElseThrow(() ->
                         new RuntimeException("Bill not found with invoice number: " + invoiceNumber));
+    }
+
+    public List<Bill> getAllBills() {
+        return billRepository.findAll();
     }
 }
